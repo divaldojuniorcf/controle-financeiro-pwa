@@ -1,7 +1,14 @@
 import { edate, eomonth, isoParaSerial, serialParaIso } from "./datas";
+import { analisarCodigo } from "./pagamento";
 import type { Lancamento } from "./tipos";
 
 export const MAX_MESES_POR_EXECUCAO = 36;
+
+/** Pix pode ser pago todo mês com o mesmo código; boleto (linha digitável ou código de barras) não. */
+export function repeteCodigo(codigo: string | undefined): boolean {
+  const c = analisarCodigo(codigo);
+  return !!c && c.tipo !== "boleto" && c.tipo !== "barras" && c.tipo !== "convenio";
+}
 
 /** Meses futuros: vazio ou inválido vale 1, como na macro. */
 export function mesesDeRecorrencia(valor: number | null): number {
@@ -39,8 +46,9 @@ export function gerarRecorrentes(
     const entrada = r.dataEntrada ? isoParaSerial(r.dataEntrada) : null;
     for (let m = 1; m <= MAX_MESES_POR_EXECUCAO && edate(venc, m) <= limite; m++) {
       const v = edate(venc, m);
-      // O código Pix/boleto é de uma cobrança só: as cópias dos próximos meses saem sem ele.
-      const { codigoPagamento: _codigo, ...copia } = r;
+      // Pix se repete nos próximos meses; código de barras de boleto é de uma cobrança só e não é copiado.
+      const { codigoPagamento: _codigo, ...semCodigo } = r;
+      const copia = repeteCodigo(r.codigoPagamento) ? r : semCodigo;
       novas.push({
         ...copia,
         id: novoId(),

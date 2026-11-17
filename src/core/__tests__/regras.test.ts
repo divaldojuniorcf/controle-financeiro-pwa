@@ -278,6 +278,18 @@ describe("Melhorias: calendário e código de pagamento", () => {
     expect(novas[0]).not.toHaveProperty("codigoPagamento");
   });
 
+  it("recorrência repete o Pix nos próximos meses, mas não a linha digitável nem o código de barras", () => {
+    const hoje = isoParaSerial("2026-11-17");
+    const pix = "00020126580014br.gov.bcb.pix0136123e4567-e12b-12d1-a456-4266554400005204000053039865802BR5913Fulano de Tal6008BRASILIA62070503***63041D3D";
+    const comPix = gerarRecorrentes([lanc({ descricao: "Aluguel", vencimento: "2026-11-10", recorrente: "Mensal", codigoPagamento: pix })], hoje, 3, id);
+    expect(comPix.map((x) => x.codigoPagamento)).toEqual([pix, pix, pix]);
+    const linha = "23793381286000000000400000000406184340000006990";
+    for (const codigo of [linha, "2".repeat(44), "8".repeat(48)]) {
+      const copias = gerarRecorrentes([lanc({ descricao: "Boleto", vencimento: "2026-11-10", recorrente: "Mensal", codigoPagamento: codigo })], hoje, 1, id);
+      expect(copias[0]).not.toHaveProperty("codigoPagamento");
+    }
+  });
+
   it("CSV de Lançamentos guarda o código como texto e aceita o formato antigo", () => {
     const l = lanc({ descricao: "Internet", codigoPagamento: "00020126" + "0".repeat(20) + "6304ABCD" });
     const csv = lancamentosParaCsv([l]);

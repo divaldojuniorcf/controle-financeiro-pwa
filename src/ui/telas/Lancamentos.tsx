@@ -49,7 +49,7 @@ function CampoCodigo({ valor, onChange }: { valor: string; onChange: (v: string)
         <button type="button" className="botao" onClick={colar}>Colar</button>
         {valor && <button type="button" className="botao" onClick={() => onChange("")}>Limpar código</button>}
       </div>
-      <span className="sec">Em Contas a Pagar, o botão "Pagar" copia este código. Contas geradas pela recorrência (Mensal) não herdam o código.</span>
+      <span className="sec">Em Contas a Pagar, o botão "Pagar" copia este código. Na recorrência (Mensal), o Pix se repete nos próximos meses; o código de barras do boleto não (cada mês tem um boleto novo).</span>
     </div>
   );
 }
