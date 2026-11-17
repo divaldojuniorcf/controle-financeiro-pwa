@@ -1,8 +1,10 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Tela } from "../ui/componentes";
 import { BoasVindas } from "../ui/telas/BoasVindas";
+import { Contas } from "../ui/telas/Contas";
 import { Investimentos } from "../ui/telas/Investimentos";
 import { Lancamentos } from "../ui/telas/Lancamentos";
+import { PagasRecebidas } from "../ui/telas/PagasRecebidas";
 import { Parametros } from "../ui/telas/Parametros";
 import { ProvedorApp } from "./estado";
 
@@ -43,9 +45,9 @@ function Telas() {
   return (
     <div className="app">
       {aba === "dashboard" && <EmConstrucao titulo="Dashboard Financeiro" fase={5} />}
-      {aba === "pagar" && <EmConstrucao titulo="Contas a Pagar" fase={3} />}
-      {aba === "receber" && <EmConstrucao titulo="Contas a Receber" fase={3} />}
-      {aba === "pagas" && <EmConstrucao titulo="Contas Pagas e Recebidas" fase={3} />}
+      {aba === "pagar" && <Contas key="pagar" tipo="Pagar" />}
+      {aba === "receber" && <Contas key="receber" tipo="Receber" />}
+      {aba === "pagas" && <PagasRecebidas />}
       {aba === "lancamentos" && <Lancamentos />}
       {aba === "investimentos" && <Investimentos />}
       {aba === "parametros" && <Parametros />}

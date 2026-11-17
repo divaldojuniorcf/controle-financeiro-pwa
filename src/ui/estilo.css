@@ -111,3 +111,11 @@ button, input, select { font: inherit; }
 
 .boas-vindas { max-width: 480px; margin: 0 auto; padding: calc(32px + env(safe-area-inset-top)) 16px 32px; }
 .boas-vindas ol { padding-left: 20px; color: var(--ajuda); line-height: 1.5; }
+
+/* Botão de baixa (✔) */
+.marcar {
+  width: 36px; height: 36px; border-radius: 8px; border: 2px solid var(--borda); background: #fff;
+  color: #006100; font-size: 18px; font-weight: 700; display: grid; place-items: center; cursor: pointer; padding: 0;
+}
+.marcar.feito { background: #c6efce; border-color: #006100; }
+.marcar.sel { background: var(--cab-tabela); border-color: var(--cab-tabela); color: #fff; }

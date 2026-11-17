@@ -40,6 +40,21 @@ export function CampoData({
   );
 }
 
+/** Data de filtro (amarela, seção 7): vazio tem significado ("mês atual", "Hoje"). */
+export function CampoFiltroData({
+  rotulo, valor, onChange,
+}: { rotulo: string; valor: DataISO | null; onChange: (v: DataISO | null) => void }) {
+  return (
+    <div className="campo amarelo">
+      <span>{rotulo}</span>
+      <div style={{ display: "flex", gap: 8 }}>
+        <input type="date" value={valor ?? ""} onChange={(e) => onChange(e.target.value || null)} aria-label={rotulo} />
+        {valor && <button className="botao" onClick={() => onChange(null)}>Limpar</button>}
+      </div>
+    </div>
+  );
+}
+
 export function CampoTexto({ rotulo, valor, onChange, erro }: { rotulo: string; valor: string; onChange: (v: string) => void; erro?: string }) {
   return (
     <label className="campo">
