@@ -53,10 +53,14 @@ export function Lancamentos() {
       if (baixados.has(r.id) && mudaChave(original, r) &&
         !confirm("Este lançamento já tem baixa (✔). Alterar descrição, tipo, vencimento ou valor faz a baixa deixar de valer e o item volta a ficar em aberto, como na planilha. Continuar?"))
         return;
-      alterarEstado((s) => ({ ...s, lancamentos: s.lancamentos.map((l) => (l.id === r.id ? { ...r, id: r.id! } : l)) }));
+      // Mudar o campo Recorrente roda a geração "Mensal" (como a macro da planilha).
+      alterarEstado(
+        (s) => ({ ...s, lancamentos: s.lancamentos.map((l) => (l.id === r.id ? { ...r, id: r.id! } : l)) }),
+        { recorrencia: original.recorrente !== r.recorrente },
+      );
     } else {
       // Novas linhas sempre no final.
-      alterarEstado((s) => ({ ...s, lancamentos: [...s.lancamentos, { ...r, id: novoId() }] }));
+      alterarEstado((s) => ({ ...s, lancamentos: [...s.lancamentos, { ...r, id: novoId() }] }), { recorrencia: r.recorrente !== "" });
     }
     setEditando(null);
   }
@@ -67,7 +71,8 @@ export function Lancamentos() {
       ? "Este lançamento já tem baixa (✔). A planilha recomenda não apagar linhas já baixadas: a baixa fica sem o item. Excluir mesmo assim?"
       : "Excluir este lançamento?";
     if (!confirm(aviso)) return;
-    alterarEstado((s) => ({ ...s, lancamentos: s.lancamentos.filter((l) => l.id !== editando.id) }));
+    // Na planilha, apagar a linha também mexe na coluna Recorrente e roda a geração.
+    alterarEstado((s) => ({ ...s, lancamentos: s.lancamentos.filter((l) => l.id !== editando.id) }), { recorrencia: true });
     setEditando(null);
   }
 
@@ -76,7 +81,7 @@ export function Lancamentos() {
   return (
     <Tela
       titulo="Lançamentos"
-      ajuda="Registre aqui todas as entradas e saídas. Novos lançamentos entram sempre no final da lista. Não reordene nem apague lançamentos depois de dar baixa em Contas a Pagar/Receber (a baixa acompanha a ordem dos lançamentos). Toque em um lançamento para editar."
+      ajuda="Registre aqui todas as entradas e saídas. Novos lançamentos entram sempre no final da lista. Não reordene nem apague lançamentos depois de dar baixa em Contas a Pagar/Receber (a baixa acompanha a ordem dos lançamentos). Toque em um lançamento para editar. Recorrente = Mensal gera os próximos meses automaticamente (ao abrir o app e ao marcar Mensal); para encerrar, limpe Recorrente na última ocorrência."
     >
       <div className="botoes">
         <button className="botao primario" onClick={() => abrir(NOVO())}>+ Novo lançamento</button>

@@ -1,7 +1,7 @@
 // Regras da seção 4 e 5 com dados pequenos, independentes do dados.json.
 import { describe, expect, it } from "vitest";
 import { alternarBaixas } from "../baixas";
-import { contasDoEstado } from "../calculo";
+import { aplicarRecorrencia, contasDoEstado } from "../calculo";
 import { cardsDeContas, listaDeContas, tituloDaLista } from "../contas";
 import { calcularDashboard, classificar } from "../dashboard";
 import { date, edate, eomonth, formatarData, isoParaSerial, serialParaIso } from "../datas";
@@ -181,6 +181,46 @@ describe("Recorrência mensal (4.9)", () => {
     const l = [lanc({ descricao: "Y", vencimento: "2026-11-05", recorrente: "Mensal" })];
     const novas = gerarRecorrentes(l, hoje, null, id);
     expect(novas.map((x) => [x.vencimento, x.dataEntrada])).toEqual([["2026-12-05", "2026-12-05"]]);
+  });
+});
+
+describe("Critério de aceite 4: recorrência ao abrir o app", () => {
+  it("marcar 'Mensal', abrir em outra data (Hoje) e conferir as novas linhas, sem duplicar", () => {
+    let e = estado([
+      lanc({ descricao: "Internet", vencimento: "2026-10-15", valor: 120 }),
+      lanc({ descricao: "Internet", vencimento: "2026-11-15", valor: 120 }),
+    ]);
+    // Abrir o app sem nenhuma conta "Mensal": nada muda.
+    expect(aplicarRecorrencia(e, id).geradas).toBe(0);
+
+    // Marcar "Mensal" na última linha: gera até fev/2027 (Hoje 17/11/2026 + 3 meses).
+    e.lancamentos[1] = { ...e.lancamentos[1]!, recorrente: "Mensal" };
+    let r = aplicarRecorrencia(e, id);
+    expect(r.geradas).toBe(3);
+    e = r.estado;
+    expect(e.lancamentos.map((l) => l.vencimento)).toEqual([
+      "2026-10-15", "2026-11-15", "2026-12-15", "2027-01-15", "2027-02-15",
+    ]);
+
+    // Abrir de novo no mesmo dia: não duplica.
+    expect(aplicarRecorrencia(e, id).geradas).toBe(0);
+
+    // Abrir em outra data (Hoje = 10/01/2027): gera só março e abril.
+    e = { ...e, parametros: { ...e.parametros, hojeFixo: "2027-01-10" } };
+    r = aplicarRecorrencia(e, id);
+    expect(r.estado.lancamentos.slice(5).map((l) => l.vencimento)).toEqual(["2027-03-15", "2027-04-15"]);
+    expect(aplicarRecorrencia(r.estado, id).geradas).toBe(0);
+
+    // As cópias aparecem em Contas a Pagar.
+    expect(contasDoEstado(r.estado).pagar.filter((i) => i.descricao === "Internet")).toHaveLength(7);
+  });
+
+  it("para encerrar, limpar Recorrente na última linha", () => {
+    const e = estado([lanc({ descricao: "Academia", vencimento: "2026-11-05", recorrente: "Mensal" })]);
+    const r = aplicarRecorrencia(e, id);
+    const ultima = r.estado.lancamentos.length - 1;
+    r.estado.lancamentos[ultima] = { ...r.estado.lancamentos[ultima]!, recorrente: "" };
+    expect(aplicarRecorrencia({ ...r.estado, parametros: { ...r.estado.parametros, hojeFixo: "2027-12-01" } }, id).geradas).toBe(0);
   });
 });
 
