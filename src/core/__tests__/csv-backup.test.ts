@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { gerarBackup } from "../backup";
+import { diasSemBackup, gerarBackup, precisaAvisarBackup } from "../backup";
 import { contasDoEstado } from "../calculo";
 import {
   baixasParaCsv, importarCsv, investimentosParaCsv, lancamentosParaCsv, lerCsv, lerNumero, parametrosParaCsv,
@@ -27,6 +27,20 @@ describe("CSV", () => {
   });
   it("cabeçalho desconhecido dá erro claro", () => {
     expect(() => importarCsv("x;y\n1;2")).toThrow(/não reconhecido/);
+  });
+});
+
+describe("Aviso de backup (mais de 30 dias sem exportar)", () => {
+  const agora = new Date("2026-12-20T10:00:00");
+  it("conta a partir do último backup", () => {
+    expect(diasSemBackup("2026-11-20T09:00:00", "2026-01-01T00:00:00", agora)).toBe(30);
+    expect(precisaAvisarBackup("2026-11-20T09:00:00", null, agora)).toBe(false);
+    expect(precisaAvisarBackup("2026-11-19T09:00:00", null, agora)).toBe(true);
+  });
+  it("sem backup, conta desde que os dados entraram no app", () => {
+    expect(precisaAvisarBackup(null, "2026-12-01T00:00:00", agora)).toBe(false);
+    expect(precisaAvisarBackup(null, "2026-11-01T00:00:00", agora)).toBe(true);
+    expect(precisaAvisarBackup(null, null, agora)).toBe(false);
   });
 });
 

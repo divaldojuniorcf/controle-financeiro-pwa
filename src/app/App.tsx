@@ -6,7 +6,9 @@ import { Investimentos } from "../ui/telas/Investimentos";
 import { Lancamentos } from "../ui/telas/Lancamentos";
 import { PagasRecebidas } from "../ui/telas/PagasRecebidas";
 import { Parametros } from "../ui/telas/Parametros";
-import { ProvedorApp } from "./estado";
+import { diasSemBackup, precisaAvisarBackup } from "../core/backup";
+import { ProvedorApp, useApp } from "./estado";
+import { exportarJson } from "./transferencia";
 
 type Aba = "dashboard" | "pagar" | "receber" | "pagas" | "lancamentos" | "investimentos" | "parametros";
 
@@ -31,6 +33,31 @@ const ABAS: { id: Aba; rotulo: string; curto: string }[] = [
   { id: "parametros", rotulo: "Parâmetros", curto: "Parâm." },
 ];
 
+/** Aviso quando passa de 30 dias sem "Exportar JSON". */
+function AvisoBackup() {
+  const { estado, ui, alterarUi } = useApp();
+  const [erro, setErro] = useState<string | null>(null);
+  if (!precisaAvisarBackup(ui.ultimoBackup, ui.inicio)) return null;
+  const dias = diasSemBackup(ui.ultimoBackup, ui.inicio)!;
+  async function exportar() {
+    try {
+      await exportarJson(estado, ui.dataAnalise);
+      alterarUi((u) => ({ ...u, ultimoBackup: new Date().toISOString() }));
+    } catch (e) {
+      if ((e as Error).name !== "AbortError") setErro((e as Error).message);
+    }
+  }
+  return (
+    <div className="faixa-backup" role="alert">
+      <span>
+        {ui.ultimoBackup ? `Faz ${dias} dias que você não exporta um backup.` : `Você ainda não exportou nenhum backup (${dias} dias).`}
+        {erro ? ` ${erro}` : ""}
+      </span>
+      <button className="botao" onClick={exportar}>Exportar JSON</button>
+    </div>
+  );
+}
+
 function Telas() {
   const [aba, setAba] = useState<Aba>(() => (sessionStorage.getItem("aba") as Aba | null) ?? "dashboard");
   useEffect(() => {
@@ -40,6 +67,7 @@ function Telas() {
 
   return (
     <div className="app">
+      <AvisoBackup />
       {aba === "dashboard" && <Dashboard />}
       {aba === "pagar" && <Contas key="pagar" tipo="Pagar" />}
       {aba === "receber" && <Contas key="receber" tipo="Receber" />}

@@ -1,14 +1,18 @@
-// Persistência local (IndexedDB). Nada sai do aparelho.
+// Persistência local (IndexedDB), sempre cifrada com o PIN. Nada sai do aparelho.
 import { openDB, type IDBPDatabase } from "idb";
 import type { DataISO, Estado } from "../core/tipos";
 import type { Visualizar } from "../core/contas";
+import { cifrar, type Cifrado } from "./cripto";
 
 export interface EstadoUi {
   dataAnalise: DataISO | null;
   filtroPagar: { dataEscolhida: DataISO | null; visualizar: Visualizar };
   filtroReceber: { dataEscolhida: DataISO | null; visualizar: Visualizar };
   dataPagasRecebidas: DataISO | null;
+  /** Data e hora (ISO) do último "Exportar JSON". */
   ultimoBackup: string | null;
+  /** Quando os dados foram criados no aparelho; base do aviso de backup se nunca houve exportação. */
+  inicio: string | null;
 }
 
 export const UI_PADRAO: EstadoUi = {
@@ -17,16 +21,19 @@ export const UI_PADRAO: EstadoUi = {
   filtroReceber: { dataEscolhida: null, visualizar: "Data / mês atual" },
   dataPagasRecebidas: null,
   ultimoBackup: null,
+  inicio: null,
 };
 
-interface Gravado {
+export interface Gravado {
   estado: Estado;
   ui: EstadoUi;
 }
 
 const NOME = "controle-financeiro";
 const LOJA = "dados";
-const CHAVE = "atual";
+const CIFRADO = "cifrado";
+/** Formato antigo, sem cifra (Fases 2 a 5). Só é lido para migrar. */
+const SEM_CIFRA = "atual";
 
 let conexao: Promise<IDBPDatabase> | null = null;
 function db() {
@@ -38,21 +45,41 @@ function db() {
   return conexao;
 }
 
-export async function carregar(): Promise<Gravado | null> {
-  const g = (await (await db()).get(LOJA, CHAVE)) as Gravado | undefined;
-  if (!g) return null;
+export type Situacao =
+  | { tipo: "vazio" }
+  | { tipo: "cifrado"; cifrado: Cifrado }
+  | { tipo: "sem-cifra"; gravado: Gravado };
+
+export async function lerSituacao(): Promise<Situacao> {
+  const d = await db();
+  const c = (await d.get(LOJA, CIFRADO)) as Cifrado | undefined;
+  if (c) return { tipo: "cifrado", cifrado: c };
+  const g = (await d.get(LOJA, SEM_CIFRA)) as Gravado | undefined;
+  if (g) return { tipo: "sem-cifra", gravado: completarUi(g) };
+  return { tipo: "vazio" };
+}
+
+export function completarUi(g: Gravado): Gravado {
   return { estado: g.estado, ui: { ...UI_PADRAO, ...g.ui } };
 }
 
-export async function salvar(g: Gravado): Promise<void> {
-  await (await db()).put(LOJA, g, CHAVE);
+export async function salvarCifrado(g: Gravado, chave: CryptoKey, salt: Uint8Array, iteracoes: number): Promise<void> {
+  const c = await cifrar(chave, salt, g, iteracoes);
+  const d = await db();
+  const tx = d.transaction(LOJA, "readwrite");
+  await tx.store.put(c, CIFRADO);
+  await tx.store.delete(SEM_CIFRA);
+  await tx.done;
 }
 
 export async function apagarTudo(): Promise<void> {
-  await (await db()).delete(LOJA, CHAVE);
+  const d = await db();
+  const tx = d.transaction(LOJA, "readwrite");
+  await tx.store.clear();
+  await tx.done;
 }
 
-/** Pede ao navegador para não apagar os dados por falta de espaço (Safari respeita no app instalado). */
+/** Pede ao navegador para não apagar os dados por falta de espaço. */
 export async function pedirArmazenamentoPersistente(): Promise<void> {
   try {
     await navigator.storage?.persist?.();
