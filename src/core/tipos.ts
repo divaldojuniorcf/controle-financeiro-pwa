@@ -15,6 +15,8 @@ export interface Lancamento {
   categoria: string;
   valor: number | null;
   recorrente: string; // "" | "Mensal"
+  /** Pix copia e cola ou linha digitável/código de barras do boleto (só para saídas; não existe na planilha). */
+  codigoPagamento?: string;
 }
 
 /** Linha da tabela tblInv (só os campos digitados). */
@@ -71,4 +73,6 @@ export interface ItemConta {
   indice: number;
   /** id do lançamento ou investimento que gerou o item. */
   ref: string;
+  /** Código Pix ou do boleto, copiado pelo botão "Pagar". */
+  codigoPagamento?: string;
 }

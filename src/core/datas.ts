@@ -89,3 +89,8 @@ export function nomeDoMes(serial: number): string {
 export function formatarMesAno(serial: number): string {
   return `${nomeDoMes(serial).slice(0, 3)}/${ano(serial)}`;
 }
+
+/** 0 = domingo … 6 = sábado. */
+export function diaDaSemana(serial: number): number {
+  return new Date(BASE_UTC + Math.floor(serial) * DIA_MS).getUTCDay();
+}

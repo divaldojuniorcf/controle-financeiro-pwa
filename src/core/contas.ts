@@ -149,3 +149,18 @@ export function pagasERecebidas(
 
 export const VAZIO_BAIXAS_PERIODO = "Nenhuma baixa neste período";
 export const VAZIO_BAIXAS_TODAS = "Nenhuma baixa registrada";
+
+// ---------- Bolinhas do calendário de "Data escolhida" ----------
+
+/** "aberto": o dia tem alguma conta em aberto; "pago": todas as contas do dia já foram baixadas. */
+export type MarcaDia = "aberto" | "pago";
+
+export function marcasPorDia(itens: ItemConta[]): Map<number, MarcaDia> {
+  const marcas = new Map<number, MarcaDia>();
+  for (const i of itens) {
+    if (!i.vencimento) continue;
+    if (!i.pago) marcas.set(i.vencimento, "aberto");
+    else if (!marcas.has(i.vencimento)) marcas.set(i.vencimento, "pago");
+  }
+  return marcas;
+}

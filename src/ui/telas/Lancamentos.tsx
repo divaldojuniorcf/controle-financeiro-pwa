@@ -3,6 +3,7 @@ import { novoId, useApp } from "../../app/estado";
 import { categoriasDoTipo } from "../../core/dashboard";
 import { formatarData, hojeDoAparelho } from "../../core/datas";
 import { moeda } from "../../core/numeros";
+import { analisarCodigo } from "../../core/pagamento";
 import type { Lancamento } from "../../core/tipos";
 import { CampoData, CampoLista, CampoNumero, CampoTexto, Folha, Tela } from "../componentes";
 
@@ -10,8 +11,48 @@ type Rascunho = Omit<Lancamento, "id"> & { id: string | null };
 
 const NOVO = (): Rascunho => ({
   id: null, dataEntrada: hojeDoAparelho(), vencimento: null, descricao: "",
-  tipo: "Saída", categoria: "", valor: null, recorrente: "",
+  tipo: "Saída", categoria: "", valor: null, recorrente: "", codigoPagamento: "",
 });
+
+/** Guarda o código só em saídas e sem espaços nas pontas; vazio some do registro. */
+function semCodigoVazio<T extends { tipo: string; codigoPagamento?: string }>(l: T): T {
+  const { codigoPagamento, ...resto } = l;
+  const c = (codigoPagamento ?? "").trim();
+  return (l.tipo === "Saída" && c ? { ...resto, codigoPagamento: c } : resto) as T;
+}
+
+/** Campo do Pix copia e cola ou da linha digitável/código de barras, com conferência na hora. */
+function CampoCodigo({ valor, onChange }: { valor: string; onChange: (v: string) => void }) {
+  const c = analisarCodigo(valor);
+  const [erro, setErro] = useState<string | null>(null);
+  async function colar() {
+    setErro(null);
+    try {
+      onChange((await navigator.clipboard.readText()).trim());
+    } catch {
+      setErro("Não foi possível ler a área de transferência. Toque e segure no campo e escolha Colar.");
+    }
+  }
+  return (
+    <div className="campo">
+      <span>Código Pix ou do boleto (opcional)</span>
+      <textarea className="codigo" value={valor} onChange={(e) => onChange(e.target.value)}
+        placeholder="Cole aqui o Pix copia e cola ou a linha digitável do boleto" autoComplete="off" autoCorrect="off" spellCheck={false} />
+      {c && (
+        <span className={c.valido === false ? "erro-campo" : "sec"}>
+          {c.rotulo}
+          {c.valido === true ? " · conferido ✔" : c.valido === false ? " · a conferência dos dígitos não bateu: confira se colou o código inteiro" : ""}
+        </span>
+      )}
+      {erro && <span className="erro-campo">{erro}</span>}
+      <div className="botoes">
+        <button type="button" className="botao" onClick={colar}>Colar</button>
+        {valor && <button type="button" className="botao" onClick={() => onChange("")}>Limpar código</button>}
+      </div>
+      <span className="sec">Em Contas a Pagar, o botão "Pagar" copia este código. Contas geradas pela recorrência (Mensal) não herdam o código.</span>
+    </div>
+  );
+}
 
 function validar(r: Rascunho): Partial<Record<keyof Rascunho, string>> {
   const e: Partial<Record<keyof Rascunho, string>> = {};
@@ -55,12 +96,12 @@ export function Lancamentos() {
         return;
       // Mudar o campo Recorrente roda a geração "Mensal" (como a macro da planilha).
       alterarEstado(
-        (s) => ({ ...s, lancamentos: s.lancamentos.map((l) => (l.id === r.id ? { ...r, id: r.id! } : l)) }),
+        (s) => ({ ...s, lancamentos: s.lancamentos.map((l) => (l.id === r.id ? semCodigoVazio({ ...r, id: r.id! }) : l)) }),
         { recorrencia: original.recorrente !== r.recorrente },
       );
     } else {
       // Novas linhas sempre no final.
-      alterarEstado((s) => ({ ...s, lancamentos: [...s.lancamentos, { ...r, id: novoId() }] }), { recorrencia: r.recorrente !== "" });
+      alterarEstado((s) => ({ ...s, lancamentos: [...s.lancamentos, semCodigoVazio({ ...r, id: novoId() })] }), { recorrencia: r.recorrente !== "" });
     }
     setEditando(null);
   }
@@ -97,7 +138,7 @@ export function Lancamentos() {
             key={l.id}
             className="item"
             style={{ gridTemplateColumns: "84px 1fr auto" }}
-            onClick={() => abrir({ ...l })}
+            onClick={() => abrir({ ...l, codigoPagamento: l.codigoPagamento ?? "" })}
           >
             <span className="editavel">{formatarData(l.vencimento)}</span>
             <span className="editavel">{l.descricao}</span>
@@ -107,6 +148,7 @@ export function Lancamentos() {
               {l.tipo} · {l.categoria}
               {l.dataEntrada ? ` · entrada ${formatarData(l.dataEntrada)}` : ""}
               {l.recorrente ? ` · ${l.recorrente}` : ""}
+              {analisarCodigo(l.codigoPagamento) ? (analisarCodigo(l.codigoPagamento)!.tipo === "pix" ? " · Pix" : " · Boleto") : ""}
               {baixados.has(l.id) ? " · ✔" : ""}
             </span>
           </button>
@@ -132,6 +174,9 @@ export function Lancamentos() {
           </div>
           <CampoLista rotulo="Categoria" valor={editando.categoria} opcoes={["", ...cats]} erro={erros.categoria} onChange={(v) => setEditando({ ...editando, categoria: v })} />
           <CampoNumero rotulo="Valor" sufixo="R$" valor={editando.valor} erro={erros.valor} onChange={(v) => setEditando({ ...editando, valor: v })} />
+          {editando.tipo === "Saída" && (
+            <CampoCodigo valor={editando.codigoPagamento ?? ""} onChange={(v) => setEditando({ ...editando, codigoPagamento: v })} />
+          )}
           <div className="botoes">
             <button className="botao primario" onClick={salvar}>Salvar</button>
             <button className="botao" onClick={() => setEditando(null)}>Cancelar</button>

@@ -39,8 +39,10 @@ export function gerarRecorrentes(
     const entrada = r.dataEntrada ? isoParaSerial(r.dataEntrada) : null;
     for (let m = 1; m <= MAX_MESES_POR_EXECUCAO && edate(venc, m) <= limite; m++) {
       const v = edate(venc, m);
+      // O código Pix/boleto é de uma cobrança só: as cópias dos próximos meses saem sem ele.
+      const { codigoPagamento: _codigo, ...copia } = r;
       novas.push({
-        ...r,
+        ...copia,
         id: novoId(),
         vencimento: serialParaIso(v),
         dataEntrada: serialParaIso(entrada !== null ? edate(entrada, m) : v),

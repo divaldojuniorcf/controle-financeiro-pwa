@@ -1,5 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
+import type { MarcaDia } from "../core/contas";
 import { lerNumero } from "../core/csv";
+import { date, diaDaSemana, eomonth, formatarData, isoParaSerial, nomeDoMes, serialParaIso } from "../core/datas";
 import { moedaCard } from "../core/numeros";
 import type { DataISO } from "../core/tipos";
 
@@ -128,6 +130,123 @@ export function Folha({ titulo, aoFechar, children }: { titulo: string; aoFechar
         <h2>{titulo}</h2>
         {children}
       </div>
+    </div>
+  );
+}
+
+const SEMANA = ["D", "S", "T", "Q", "Q", "S", "S"];
+
+/**
+ * "Data escolhida" com calendário próprio: bolinha vermelha nos dias com conta em aberto,
+ * verde nos dias em que tudo já foi baixado. Vazio = mês atual.
+ */
+export function CalendarioFiltro({
+  rotulo, valor, onChange, marcas, hoje,
+}: { rotulo: string; valor: DataISO | null; onChange: (v: DataISO | null) => void; marcas: Map<number, MarcaDia>; hoje: number }) {
+  const [aberto, setAberto] = useState(false);
+  const base = valor ? isoParaSerial(valor) : hoje;
+  const [mes, setMes] = useState<[number, number]>(() => {
+    const [a, m] = serialParaIso(base).split("-").map(Number);
+    return [a!, m!];
+  });
+  const abrir = () => {
+    const [a, m] = serialParaIso(base).split("-").map(Number);
+    setMes([a!, m!]);
+    setAberto(true);
+  };
+  const [ano, m] = mes;
+  const primeiro = date(ano, m, 1);
+  const dias = eomonth(primeiro, 0) - primeiro + 1;
+  const vazios = diaDaSemana(primeiro);
+  const selecionado = valor ? isoParaSerial(valor) : null;
+  const mover = (delta: number) => setMes(([a, mm]) => {
+    const n = date(a, mm + delta, 1);
+    const [na, nm] = serialParaIso(n).split("-").map(Number);
+    return [na!, nm!];
+  });
+
+  return (
+    <div className="campo amarelo">
+      <span>{rotulo}</span>
+      <div style={{ display: "flex", gap: 8 }}>
+        <button type="button" className="campo-data" onClick={abrir} aria-label={`${rotulo}: ${valor ? formatarData(valor) : "vazio"}`}>
+          {valor ? formatarData(valor) : "Escolher data"}
+          <span aria-hidden="true">📅</span>
+        </button>
+        {valor && <button type="button" className="botao" onClick={() => onChange(null)}>Limpar</button>}
+      </div>
+      {aberto && (
+        <Folha titulo={rotulo} aoFechar={() => setAberto(false)}>
+          <div className="cal-topo">
+            <button type="button" className="botao" onClick={() => mover(-1)} aria-label="Mês anterior">‹</button>
+            <span className="forte">{nomeDoMes(primeiro).replace(/^./, (l) => l.toUpperCase())} de {ano}</span>
+            <button type="button" className="botao" onClick={() => mover(1)} aria-label="Próximo mês">›</button>
+          </div>
+          <div className="cal-grade" role="grid">
+            {SEMANA.map((s, k) => <span key={`s${k}`} className="cal-semana">{s}</span>)}
+            {Array.from({ length: vazios }, (_, k) => <span key={`v${k}`} />)}
+            {Array.from({ length: dias }, (_, k) => {
+              const d = primeiro + k;
+              const marca = marcas.get(d);
+              return (
+                <button
+                  type="button"
+                  key={d}
+                  className={`cal-dia${d === selecionado ? " sel" : ""}${d === hoje ? " hoje" : ""}`}
+                  onClick={() => { onChange(serialParaIso(d)); setAberto(false); }}
+                  aria-label={`${formatarData(d)}${marca === "aberto" ? ", com conta em aberto" : marca === "pago" ? ", contas baixadas" : ""}`}
+                >
+                  {k + 1}
+                  <span className={`ponto ${marca ?? ""}`} aria-hidden="true" />
+                </button>
+              );
+            })}
+          </div>
+          <p className="cal-legenda">
+            <span className="ponto aberto" /> Em aberto <span className="ponto pago" /> Tudo baixado
+          </p>
+          <div className="botoes">
+            <button type="button" className="botao" onClick={() => { onChange(null); setAberto(false); }}>Mês atual (limpar)</button>
+            <button type="button" className="botao" onClick={() => setAberto(false)}>Fechar</button>
+          </div>
+        </Folha>
+      )}
+    </div>
+  );
+}
+
+/** Copia para a área de transferência (com alternativa para navegadores antigos). */
+export async function copiarTexto(texto: string): Promise<void> {
+  try {
+    await navigator.clipboard.writeText(texto);
+    return;
+  } catch {
+    /* tenta o método antigo */
+  }
+  const t = document.createElement("textarea");
+  t.value = texto;
+  t.setAttribute("readonly", "");
+  t.style.position = "fixed";
+  t.style.opacity = "0";
+  document.body.appendChild(t);
+  t.select();
+  t.setSelectionRange(0, texto.length);
+  const ok = document.execCommand("copy");
+  t.remove();
+  if (!ok) throw new Error("Não foi possível copiar. Toque e segure no código para copiar manualmente.");
+}
+
+/** Mensagem rápida acima da barra de abas. */
+export function Aviso({ texto, aoFechar }: { texto: string | null; aoFechar: () => void }) {
+  useEffect(() => {
+    if (!texto) return;
+    const t = setTimeout(aoFechar, 6000);
+    return () => clearTimeout(t);
+  }, [texto, aoFechar]);
+  if (!texto) return null;
+  return (
+    <div className="toast" role="status" onClick={aoFechar}>
+      {texto}
     </div>
   );
 }

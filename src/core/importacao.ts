@@ -65,6 +65,7 @@ export function importarDados(json: unknown, novoId: () => string): { estado: Es
       categoria: texto(l.categoria),
       valor: numero(l.valor, `${c}, Valor`),
       recorrente: texto(l.recorrente),
+      ...(texto(l.codigoPagamento).trim() ? { codigoPagamento: texto(l.codigoPagamento).trim() } : {}),
     };
   });
 

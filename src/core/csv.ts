@@ -5,7 +5,7 @@ const SEP = ";";
 const BOM = "﻿";
 
 export const CABECALHOS = {
-  lancamentos: ["Data de entrada", "Vencimento", "Descrição", "Tipo", "Categoria", "Valor", "Recorrente"],
+  lancamentos: ["Data de entrada", "Vencimento", "Descrição", "Tipo", "Categoria", "Valor", "Recorrente", "Código de pagamento"],
   investimentos: ["Data do aporte", "Ativo", "Valor investido", "Rentabilidade a.a.", "Data de resgate"],
   baixas: ["Chave", "Tipo", "Descrição", "Vencimento", "Valor", "Data da baixa", "Observação"],
   parametros: ["Parâmetro", "Valor"],
@@ -20,6 +20,9 @@ function campo(v: string): string {
 }
 const dataCsv = (iso: DataISO | null) => (iso ? iso.split("-").reverse().join("/") : "");
 const numCsv = (n: number | null) => (n === null ? "" : String(n).replace(".", ","));
+/** Texto que o Excel não converte em número (códigos longos com zeros à esquerda). */
+const textoProtegido = (s: string | undefined) => (s ? `="${s.replace(/"/g, "\"\"")}"` : "");
+const lerTextoProtegido = (s: string) => s.trim().replace(/^="(.*)"$/s, "$1").replace(/""/g, "\"").trim();
 
 function montarCsv(linhas: string[][]): string {
   return BOM + linhas.map((l) => l.map(campo).join(SEP)).join("\r\n") + "\r\n";
@@ -28,7 +31,7 @@ function montarCsv(linhas: string[][]): string {
 export function lancamentosParaCsv(ls: Lancamento[]): string {
   return montarCsv([
     [...CABECALHOS.lancamentos],
-    ...ls.map((l) => [dataCsv(l.dataEntrada), dataCsv(l.vencimento), l.descricao, l.tipo, l.categoria, numCsv(l.valor), l.recorrente]),
+    ...ls.map((l) => [dataCsv(l.dataEntrada), dataCsv(l.vencimento), l.descricao, l.tipo, l.categoria, numCsv(l.valor), l.recorrente, textoProtegido(l.codigoPagamento)]),
   ]);
 }
 
@@ -123,6 +126,8 @@ export function identificarTabela(linhas: string[][]): TabelaCsv {
   for (const [nome, cols] of Object.entries(CABECALHOS)) {
     if (cab === cols.join("|")) return nome as TabelaCsv;
   }
+  // CSV de Lançamentos exportado antes do campo "Código de pagamento".
+  if (cab === CABECALHOS.lancamentos.slice(0, 7).join("|")) return "lancamentos";
   throw new Error("Cabeçalho do CSV não reconhecido. Use um arquivo exportado pelo app.");
 }
 
@@ -143,9 +148,11 @@ export function importarCsv(texto: string): ResultadoCsv {
         tabela,
         dados: corpo.map((l, i) => {
           const o = `Linha ${i + 2}`;
+          const codigo = lerTextoProtegido(c(l, 7));
           return {
             dataEntrada: lerData(c(l, 0), o), vencimento: lerData(c(l, 1), o), descricao: c(l, 2),
             tipo: c(l, 3), categoria: c(l, 4), valor: lerNumero(c(l, 5), o), recorrente: c(l, 6),
+            ...(codigo ? { codigoPagamento: codigo } : {}),
           };
         }),
       };

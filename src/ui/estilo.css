@@ -148,3 +148,42 @@ table.apoio tr.total td { font-weight: 700; border-top: 2px solid var(--cab-apoi
 input.pin { font-size: 24px !important; letter-spacing: .4em; text-align: center; }
 .faixa-backup { display: flex; gap: 8px; align-items: center; justify-content: space-between; background: #ffeb9c; color: #7f6000; padding: 8px 16px; font-size: 13px; font-weight: 600; }
 .faixa-backup .botao { flex: none; min-height: 36px; padding: 6px 10px; border-color: #7f6000; color: #7f6000; background: #fff; }
+
+/* Calendário de "Data escolhida" */
+.campo-data {
+  flex: 1; min-height: 44px; padding: 8px 10px; border: 1px solid #b7c3d4; border-radius: 8px;
+  background: var(--amarelo); color: var(--editavel); font-size: 16px; font-weight: 700;
+  display: flex; justify-content: space-between; align-items: center; cursor: pointer; text-align: left;
+}
+.cal-topo { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+.cal-topo .botao { min-width: 44px; padding: 6px 12px; font-size: 20px; }
+.cal-grade { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.cal-semana { text-align: center; font-size: 12px; font-weight: 700; color: var(--ajuda); padding: 4px 0; }
+.cal-dia {
+  min-height: 44px; border: 1px solid #e3e7ed; border-radius: 8px; background: #fff; color: var(--texto);
+  font-size: 15px; display: grid; justify-items: center; align-content: center; gap: 3px; padding: 4px 0; cursor: pointer;
+}
+.cal-dia.hoje { border: 2px solid var(--cab-tabela); font-weight: 700; }
+.cal-dia.sel { background: var(--cab-tabela); color: #fff; border-color: var(--cab-tabela); }
+.ponto { display: inline-block; width: 7px; height: 7px; border-radius: 50%; }
+.ponto.aberto { background: var(--negativo); }
+.ponto.pago { background: var(--positivo); }
+.cal-dia.sel .ponto { box-shadow: 0 0 0 1.5px #fff; }
+.cal-legenda { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--ajuda); margin: 10px 0 0; }
+.cal-legenda .ponto:last-of-type { margin-left: 10px; }
+
+/* Botão Pagar (copia Pix/boleto) e aviso rápido */
+.botao-pagar {
+  margin-top: 6px; min-height: 36px; padding: 6px 12px; border-radius: 8px; border: 1px solid #006100;
+  background: #c6efce; color: #006100; font-weight: 700; font-size: 13px; cursor: pointer;
+}
+.toast {
+  position: fixed; left: 12px; right: 12px; z-index: 30;
+  bottom: calc(var(--nav-altura) + env(safe-area-inset-bottom) + 10px);
+  background: #1f3864; color: #fff; padding: 12px 14px; border-radius: 10px; font-size: 14px; line-height: 1.35;
+  box-shadow: 0 4px 16px rgba(0,0,0,.25);
+}
+textarea.codigo {
+  width: 100%; min-height: 72px; padding: 8px 10px; border: 1px solid #b7c3d4; border-radius: 8px;
+  color: var(--editavel); font: 14px/1.35 ui-monospace, Menlo, monospace; word-break: break-all; resize: vertical;
+}

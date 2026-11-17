@@ -2,7 +2,8 @@
 import { describe, expect, it } from "vitest";
 import { alternarBaixas } from "../baixas";
 import { aplicarRecorrencia, contasDoEstado } from "../calculo";
-import { cardsDeContas, listaDeContas, tituloDaLista } from "../contas";
+import { cardsDeContas, listaDeContas, marcasPorDia, tituloDaLista } from "../contas";
+import { importarCsv, lancamentosParaCsv } from "../csv";
 import { calcularDashboard, classificar } from "../dashboard";
 import { date, edate, eomonth, formatarData, isoParaSerial, serialParaIso } from "../datas";
 import { PARAMETROS_PADRAO } from "../importacao";
@@ -251,5 +252,39 @@ describe("Diagnóstico (seção 5): três cenários", () => {
   it("comprometimento sem entradas", () => {
     expect(calcularDashboard(contasDoEstado(estado([lanc({})])), null).comprometimento).toBe(1);
     expect(calcularDashboard(contasDoEstado(estado([])), null).comprometimento).toBe(0);
+  });
+});
+
+describe("Melhorias: calendário e código de pagamento", () => {
+  it("bolinhas: em aberto vence sobre pago no mesmo dia", () => {
+    const e = estado([
+      lanc({ descricao: "A", vencimento: "2026-11-05" }),
+      lanc({ descricao: "B", vencimento: "2026-11-05" }),
+      lanc({ descricao: "C", vencimento: "2026-11-10" }),
+    ]);
+    const c = contasDoEstado(e);
+    e.baixas = alternarBaixas([], c.pagar.filter((i) => i.descricao !== "B"), "Pagar", "2026-11-18");
+    const m = marcasPorDia(contasDoEstado(e).pagar);
+    expect(m.get(isoParaSerial("2026-11-05"))).toBe("aberto");
+    expect(m.get(isoParaSerial("2026-11-10"))).toBe("pago");
+    expect(m.has(isoParaSerial("2026-11-11"))).toBe(false);
+  });
+
+  it("código de pagamento chega em Contas a Pagar e não é copiado pela recorrência", () => {
+    const l = lanc({ descricao: "Luz", vencimento: "2026-11-25", recorrente: "Mensal", codigoPagamento: "8".repeat(48) });
+    expect(contasDoEstado(estado([l])).pagar[0]!.codigoPagamento).toBe("8".repeat(48));
+    const novas = gerarRecorrentes([l], isoParaSerial("2026-11-17"), 1, id);
+    expect(novas).toHaveLength(1);
+    expect(novas[0]).not.toHaveProperty("codigoPagamento");
+  });
+
+  it("CSV de Lançamentos guarda o código como texto e aceita o formato antigo", () => {
+    const l = lanc({ descricao: "Internet", codigoPagamento: "00020126" + "0".repeat(20) + "6304ABCD" });
+    const csv = lancamentosParaCsv([l]);
+    expect(csv).toContain('"=""00020126');
+    const volta = importarCsv(csv);
+    expect((volta.dados as Omit<Lancamento, "id">[])[0]).toMatchObject({ codigoPagamento: l.codigoPagamento });
+    const antigo = "Data de entrada;Vencimento;Descrição;Tipo;Categoria;Valor;Recorrente\r\n;10/11/2026;Água;Saída;Moradia;80;\r\n";
+    expect((importarCsv(antigo).dados as Omit<Lancamento, "id">[])[0]).not.toHaveProperty("codigoPagamento");
   });
 });

@@ -14,6 +14,7 @@ interface Bruto {
   vencimento: number;
   valor: number | null;
   ref: string;
+  codigoPagamento?: string;
 }
 
 const serial = (iso: string | null) => (iso ? isoParaSerial(iso) : 0);
@@ -54,6 +55,7 @@ export function itensAPagar(
       vencimento: serial(l.vencimento),
       valor: l.valor,
       ref: l.id,
+      codigoPagamento: l.codigoPagamento,
     })),
     ...invs.filter((i) => i.ativo !== "").map((i) => ({
       origem: "Investimento" as const,
