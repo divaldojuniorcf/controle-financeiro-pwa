@@ -6,6 +6,10 @@ import { formatarData, hojeDoAparelho } from "../../core/datas";
 import type { Parametros as P } from "../../core/tipos";
 import { escolherArquivo } from "../../storage/arquivos";
 import { PIN_VALIDO } from "../../storage/cripto";
+import {
+  ativarNotificacoes, desativarNotificacoes, motivoSemSuporte, registrarSituacao, testarNotificacao, useSituacaoLembretes,
+} from "../../app/notificacoes";
+import { DIAS_LEMBRETES, HORA_LEMBRETE } from "../../core/lembretes";
 import { CampoData, CampoNumero, Faixa, Tela } from "../componentes";
 
 /** Nomes que a planilha usa nas regras e não podem mudar. */
@@ -52,6 +56,80 @@ function ListaCategorias({ titulo, itens, limite, onChange }: { titulo: string; 
           Adicionar
         </button>
       </div>
+    </>
+  );
+}
+
+function Lembretes() {
+  const { ui, alterarUi } = useApp();
+  const situacao = useSituacaoLembretes();
+  const [msg, setMsg] = useState<string | null>(null);
+  const [ocupado, setOcupado] = useState(false);
+  const cfg = ui.notificacoes;
+  const semSuporte = motivoSemSuporte();
+
+  async function rodar(f: () => Promise<void>) {
+    setOcupado(true);
+    setMsg(null);
+    try {
+      await f();
+    } catch (e) {
+      setMsg((e as Error).message);
+    } finally {
+      setOcupado(false);
+    }
+  }
+
+  return (
+    <>
+      <Faixa cor="tabela">Lembretes de vencimento</Faixa>
+      <p className="ajuda">
+        Às {HORA_LEMBRETE}h da véspera, uma notificação com os nomes das contas a pagar e a receber que vencem no dia seguinte
+        (sem valores). Funciona com o app fechado. O servidor de lembretes recebe só os horários dos avisos; os nomes ficam no aparelho.
+      </p>
+      {!cfg && semSuporte && <p className="aviso">{semSuporte}</p>}
+      {!cfg ? (
+        <div className="botoes">
+          <button className="botao primario" disabled={ocupado || !!semSuporte}
+            onClick={() => rodar(async () => {
+              const novo = await ativarNotificacoes();
+              alterarUi((u) => ({ ...u, notificacoes: novo }));
+              setMsg("Lembretes ativados.");
+            })}>
+            Ativar lembretes
+          </button>
+        </div>
+      ) : (
+        <>
+          <p className="sec">
+            {situacao.erro ? <span className="neg">Falha ao sincronizar: {situacao.erro}</span>
+              : situacao.ultima ? `Ativos. ${situacao.agendados} aviso${situacao.agendados === 1 ? "" : "s"} agendado${situacao.agendados === 1 ? "" : "s"} (próximos ${DIAS_LEMBRETES} dias).`
+              : "Ativos. Sincronizando…"}
+          </p>
+          <div className="botoes">
+            <button className="botao" disabled={ocupado}
+              onClick={() => rodar(async () => {
+                await testarNotificacao(cfg);
+                setMsg("Notificação de teste enviada. Ela mostra as contas que vencem amanhã (pode levar alguns segundos).");
+              })}>
+              Enviar notificação de teste
+            </button>
+            <button className="botao perigo" disabled={ocupado}
+              onClick={() => confirm("Desativar os lembretes de vencimento neste aparelho?") && rodar(async () => {
+                try {
+                  await desativarNotificacoes(cfg);
+                } finally {
+                  alterarUi((u) => ({ ...u, notificacoes: null }));
+                  registrarSituacao({ ultima: null, agendados: 0, erro: null });
+                }
+                setMsg("Lembretes desativados.");
+              })}>
+              Desativar
+            </button>
+          </div>
+        </>
+      )}
+      {msg && <p className="aviso">{msg}</p>}
     </>
   );
 }
@@ -186,6 +264,7 @@ export function Parametros() {
       <p className="sec">Importar CSV substitui só a tabela do arquivo (reconhecida pelo cabeçalho). Abre no Excel com acentos e vírgula decimal.</p>
       {msg && <p className="aviso">{msg}</p>}
 
+      <Lembretes />
       <Seguranca />
     </Tela>
   );

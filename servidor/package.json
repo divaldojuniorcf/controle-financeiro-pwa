@@ -1,0 +1,12 @@
+{
+  "name": "controle-financeiro-lembretes",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "publicar": "wrangler deploy",
+    "logs": "wrangler tail"
+  },
+  "devDependencies": {
+    "wrangler": "3.99.0"
+  }
+}

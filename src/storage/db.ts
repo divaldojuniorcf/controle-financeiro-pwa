@@ -13,6 +13,8 @@ export interface EstadoUi {
   ultimoBackup: string | null;
   /** Quando os dados foram criados no aparelho; base do aviso de backup se nunca houve exportação. */
   inicio: string | null;
+  /** Lembretes de vencimento ativos neste aparelho (identificação junto ao servidor). */
+  notificacoes: { id: string; token: string } | null;
 }
 
 export const UI_PADRAO: EstadoUi = {
@@ -22,6 +24,7 @@ export const UI_PADRAO: EstadoUi = {
   dataPagasRecebidas: null,
   ultimoBackup: null,
   inicio: null,
+  notificacoes: null,
 };
 
 export interface Gravado {
@@ -31,15 +34,20 @@ export interface Gravado {
 
 const NOME = "controle-financeiro";
 const LOJA = "dados";
+/** Textos dos lembretes (nomes e datas, sem valores), lidos pelo service worker com o app fechado. */
+export const LOJA_LEMBRETES = "lembretes";
+export const VERSAO_DB = 2;
 const CIFRADO = "cifrado";
 /** Formato antigo, sem cifra (Fases 2 a 5). Só é lido para migrar. */
 const SEM_CIFRA = "atual";
 
 let conexao: Promise<IDBPDatabase> | null = null;
 function db() {
-  conexao ??= openDB(NOME, 1, {
+  // A versão e as lojas precisam bater com public/sw-push.js.
+  conexao ??= openDB(NOME, VERSAO_DB, {
     upgrade(d) {
-      d.createObjectStore(LOJA);
+      if (!d.objectStoreNames.contains(LOJA)) d.createObjectStore(LOJA);
+      if (!d.objectStoreNames.contains(LOJA_LEMBRETES)) d.createObjectStore(LOJA_LEMBRETES);
     },
   });
   return conexao;
@@ -74,8 +82,23 @@ export async function salvarCifrado(g: Gravado, chave: CryptoKey, salt: Uint8Arr
 
 export async function apagarTudo(): Promise<void> {
   const d = await db();
-  const tx = d.transaction(LOJA, "readwrite");
+  const tx = d.transaction([LOJA, LOJA_LEMBRETES], "readwrite");
+  await Promise.all([tx.objectStore(LOJA).clear(), tx.objectStore(LOJA_LEMBRETES).clear()]);
+  await tx.done;
+}
+
+export interface LembreteLocal {
+  dia: DataISO;
+  titulo: string;
+  corpo: string;
+}
+
+/** Substitui os lembretes guardados no aparelho (chave = dia do vencimento). */
+export async function salvarLembretesLocais(lembretes: LembreteLocal[]): Promise<void> {
+  const d = await db();
+  const tx = d.transaction(LOJA_LEMBRETES, "readwrite");
   await tx.store.clear();
+  await Promise.all(lembretes.map((l) => tx.store.put(l, l.dia)));
   await tx.done;
 }
 

@@ -1,4 +1,6 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { gerarLembretes } from "../core/lembretes";
+import { registrarSituacao, sincronizarLembretes } from "./notificacoes";
 import { BoasVindas } from "../ui/telas/BoasVindas";
 import { Contas } from "../ui/telas/Contas";
 import { Dashboard } from "../ui/telas/Dashboard";
@@ -32,6 +34,29 @@ const ABAS: { id: Aba; rotulo: string; curto: string }[] = [
   { id: "investimentos", rotulo: "Investimentos", curto: "Investim." },
   { id: "parametros", rotulo: "Parâmetros", curto: "Parâm." },
 ];
+
+/** Mantém os lembretes de vencimento em dia sempre que as contas mudam (baixa, edição, recorrência). */
+function SincronizarLembretes() {
+  const { contas, ui } = useApp();
+  const cfg = ui.notificacoes;
+  const enviado = useRef("");
+  useEffect(() => {
+    if (!cfg) return;
+    const lembretes = gerarLembretes(contas.pagar, contas.receber, new Date());
+    const chave = cfg.id + JSON.stringify(lembretes);
+    if (chave === enviado.current) return;
+    const t = setTimeout(() => {
+      sincronizarLembretes(cfg, lembretes)
+        .then(() => {
+          enviado.current = chave;
+          registrarSituacao({ ultima: new Date(), agendados: lembretes.length, erro: null });
+        })
+        .catch((e: Error) => registrarSituacao({ ultima: null, agendados: 0, erro: e.message }));
+    }, 1500);
+    return () => clearTimeout(t);
+  }, [contas, cfg]);
+  return null;
+}
 
 /** Aviso quando passa de 30 dias sem "Exportar JSON". */
 function AvisoBackup() {
@@ -68,6 +93,7 @@ function Telas() {
   return (
     <div className="app">
       <AvisoBackup />
+      <SincronizarLembretes />
       {aba === "dashboard" && <Dashboard />}
       {aba === "pagar" && <Contas key="pagar" tipo="Pagar" />}
       {aba === "receber" && <Contas key="receber" tipo="Receber" />}

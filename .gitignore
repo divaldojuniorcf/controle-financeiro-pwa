@@ -19,3 +19,8 @@ src/core/__tests__/referencia.test.ts
 
 # Certificado do servidor de teste HTTPS
 .vite/
+
+# Chave privada das notificações e arquivos locais do Cloudflare
+servidor/.segredos.json
+servidor/.wrangler/
+servidor/node_modules/

@@ -51,6 +51,8 @@ export default defineConfig(({ mode }) => ({
       workbox: {
         globPatterns: ["**/*.{js,css,html,png,svg,webmanifest}"],
         navigateFallback: "index.html",
+        // Recebe os pushes dos lembretes de vencimento.
+        importScripts: ["sw-push.js"],
       },
     }),
   ],
