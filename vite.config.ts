@@ -1,3 +1,4 @@
+import basicSsl from "@vitejs/plugin-basic-ssl";
 import react from "@vitejs/plugin-react";
 import { defineConfig, type Plugin } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
@@ -20,9 +21,11 @@ const bloquearDadosPessoais = (): Plugin => ({
 });
 
 // base "./" permite publicar em qualquer subpasta (ex.: usuario.github.io/controle-financeiro-pwa/).
-export default defineConfig({
+// Modo "iphone": HTTPS com certificado próprio, porque o Safari só libera a criptografia (PIN) em HTTPS.
+export default defineConfig(({ mode }) => ({
   base: "./",
   plugins: [
+    ...(mode === "iphone" ? [basicSsl()] : []),
     bloquearDadosPessoais(),
     react(),
     VitePWA({
@@ -51,4 +54,4 @@ export default defineConfig({
       },
     }),
   ],
-});
+}));

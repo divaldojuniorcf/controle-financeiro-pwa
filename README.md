@@ -32,10 +32,12 @@ Abra o endereço que aparecer (normalmente http://localhost:5173).
 ### Testar no iPhone pela rede de casa (sem publicar)
 
 1. No computador: `npm run dev:iphone`. Se o Windows perguntar, permita o acesso em redes privadas.
-2. Veja o endereço "Network" que aparece (ex.: `http://192.168.3.20:5173`).
-3. Abra esse endereço no Safari do iPhone, que precisa estar no mesmo Wi-Fi.
+2. Veja o endereço "Network" que aparece (ex.: `https://192.168.3.20:5173`). É **https**: o Safari só libera
+   a criptografia do PIN em endereços seguros.
+3. Abra esse endereço no Safari do iPhone, que precisa estar no mesmo Wi-Fi. Como o certificado é de teste,
+   o Safari mostra "Esta conexão não é privada": toque em **Mostrar Detalhes → visitar este site → Visitar Site**.
 
-Por esse endereço o app **não funciona offline** (falta HTTPS). Para usar de verdade, publique (seção 2).
+Por esse endereço de teste o app **não funciona offline**. Para usar de verdade, publique (seção 2).
 Se não abrir, o roteador pode estar isolando os aparelhos (comum em redes de visitantes).
 
 ### Testes de referência

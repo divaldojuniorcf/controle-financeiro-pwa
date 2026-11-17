@@ -3,6 +3,7 @@ import { PARAMETROS_PADRAO } from "../../core/importacao";
 import type { Estado } from "../../core/tipos";
 import { lerJson, resumoDaImportacao } from "../../app/transferencia";
 import { escolherArquivo } from "../../storage/arquivos";
+import { criptografiaDisponivel, MSG_SEM_HTTPS } from "../../storage/cripto";
 
 export function BoasVindas({ iniciar }: { iniciar: (e: Estado, ui?: { dataAnalise: string | null }) => void }) {
   const [erro, setErro] = useState<string | null>(null);
@@ -29,6 +30,7 @@ export function BoasVindas({ iniciar }: { iniciar: (e: Estado, ui?: { dataAnalis
     <main className="boas-vindas">
       <h1 className="titulo-tela grande">Controle Financeiro</h1>
       <p className="ajuda">Seus dados ficam só neste aparelho. Nada é enviado para a internet.</p>
+      {!criptografiaDisponivel() && <p className="aviso">{MSG_SEM_HTTPS}</p>}
       <p>Para começar, importe o arquivo <b>dados.json</b> exportado da planilha:</p>
       <ol>
         <li>Salve o dados.json no iCloud Drive (ou em "No meu iPhone").</li>

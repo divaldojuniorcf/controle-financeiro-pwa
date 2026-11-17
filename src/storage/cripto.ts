@@ -13,7 +13,16 @@ export interface Cifrado {
 
 export const PIN_VALIDO = /^\d{4,8}$/;
 
+/** O navegador só oferece criptografia em endereços seguros (https:// ou localhost). */
+export function criptografiaDisponivel(): boolean {
+  return typeof crypto !== "undefined" && crypto.subtle !== undefined;
+}
+
+export const MSG_SEM_HTTPS =
+  "Este endereço não é seguro (falta HTTPS) e o navegador bloqueia a criptografia do PIN. Abra o app pelo endereço https:// (o publicado ou o de teste com https).";
+
 export async function derivarChave(pin: string, salt: Uint8Array, iteracoes = ITERACOES): Promise<CryptoKey> {
+  if (!criptografiaDisponivel()) throw new Error(MSG_SEM_HTTPS);
   const base = await crypto.subtle.importKey("raw", new TextEncoder().encode(pin), "PBKDF2", false, ["deriveKey"]);
   return crypto.subtle.deriveKey(
     { name: "PBKDF2", salt, iterations: iteracoes, hash: "SHA-256" },

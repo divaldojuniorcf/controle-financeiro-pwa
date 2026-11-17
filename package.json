@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "dev:iphone": "vite --host",
+    "dev:iphone": "vite --host --mode iphone",
     "build": "tsc -p tsconfig.json && vite build",
     "preview": "vite preview --host",
     "test": "vitest run",
@@ -17,6 +17,7 @@
     "@types/node": "^22.10.0",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-basic-ssl": "^1.2.0",
     "@vitejs/plugin-react": "^4.3.4",
     "typescript": "~5.6.3",
     "vite": "^6.0.0",

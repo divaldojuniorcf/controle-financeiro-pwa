@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { PIN_VALIDO, PinIncorreto } from "../../storage/cripto";
+import { criptografiaDisponivel, MSG_SEM_HTTPS, PIN_VALIDO, PinIncorreto } from "../../storage/cripto";
 
 const MAX_TENTATIVAS = 5;
 const ESPERA_S = 30;
@@ -49,6 +49,7 @@ export function CriarPin({ migracao, aoCriar }: { migracao: boolean; aoCriar: (p
         {migracao ? "Os dados deste aparelho passam a ser protegidos por PIN. " : ""}
         O PIN bloqueia o app e cifra os dados no aparelho. <b>Se esquecer o PIN, os dados só voltam por um backup</b> (Exportar JSON em Parâmetros).
       </p>
+      {!criptografiaDisponivel() && <p className="aviso">{MSG_SEM_HTTPS}</p>}
       <form onSubmit={enviar}>
         <CampoPin rotulo="PIN (4 a 8 números)" valor={pin} onChange={setPin} autoFocus />
         <CampoPin rotulo="Repita o PIN" valor={conf} onChange={setConf} />
