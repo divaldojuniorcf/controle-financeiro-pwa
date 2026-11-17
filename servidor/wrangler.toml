@@ -11,7 +11,7 @@ crons = ["*/5 * * * *"]
 # O id é preenchido depois de `npx wrangler kv namespace create DISPOSITIVOS`.
 [[kv_namespaces]]
 binding = "DISPOSITIVOS"
-id = "PREENCHER_DEPOIS_DE_CRIAR"
+id = "3b6d6061212f43b7b48e0fcd778ee1e3"
 
 [vars]
 VAPID_PUBLICA = "BOoyqn8aeQW7osCiKY5xthemflS0-cvkfYuxjIlWv7hMiBxAvYe9S-v9tXj5MdEK5skrIGyQbv6iezmm5M6bj-k"
