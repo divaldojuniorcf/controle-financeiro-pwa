@@ -2,7 +2,7 @@
 // O servidor recebe só a assinatura de push e os HORÁRIOS; os nomes ficam no aparelho.
 import { useSyncExternalStore } from "react";
 import type { Lembrete } from "../core/lembretes";
-import { salvarLembretesLocais } from "../storage/db";
+import { lerConviteLocal, salvarLembretesLocais } from "../storage/db";
 
 const URL_SERVIDOR = (import.meta.env.VITE_URL_LEMBRETES ?? "").replace(/\/$/, "");
 const CHAVE_VAPID = import.meta.env.VITE_VAPID_PUBLICA ?? "";
@@ -63,7 +63,10 @@ export async function sincronizarLembretes(cfg: ConfigNotificacoes, lembretes: L
   await salvarLembretesLocais(lembretes.map(({ dia, titulo, corpo }) => ({ dia, titulo, corpo })));
   const assinatura = await assinaturaAtual(false);
   if (!assinatura) throw new Error("A permissão de notificações foi retirada. Desative e ative os lembretes de novo.");
-  await chamar(cfg, "PUT", "", { assinatura: { endpoint: assinatura.endpoint }, horarios: lembretes.map((l) => l.enviarEm) });
+  // Aparelho com convite: o servidor confere o convite e para os lembretes se ele for bloqueado.
+  const c = await lerConviteLocal();
+  const convite = c && !c.isento ? { codigo: c.codigo, aparelho: c.aparelho, token: c.token } : undefined;
+  await chamar(cfg, "PUT", "", { assinatura: { endpoint: assinatura.endpoint }, horarios: lembretes.map((l) => l.enviarEm), convite });
 }
 
 export async function testarNotificacao(cfg: ConfigNotificacoes): Promise<void> {

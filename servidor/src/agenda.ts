@@ -18,6 +18,8 @@ export interface Dispositivo {
   assinatura: Assinatura;
   /** Horários (ms) dos próximos avisos. Nenhum nome, valor ou descrição. */
   horarios: number[];
+  /** Código do convite do aparelho (aparelhos instalados antes dos convites não têm). */
+  convite?: string;
 }
 
 export function separarVencidos(horarios: number[], agora: number): { enviar: boolean; restantes: number[] } {

@@ -132,7 +132,26 @@ os lembretes de novo no iPhone.
 
 ---
 
-## 6. Como o app reproduz a planilha
+## 6. Convites (quem pode usar o app)
+
+Instalações novas pedem um **código de convite** na primeira abertura. Cada convite vale para **1 aparelho**.
+Aparelhos que já tinham o app antes dos convites ficam isentos.
+
+- **Gerenciar:** abra `https://controle-financeiro-lembretes.divaldojuniorcf.workers.dev/admin` e entre com a senha
+  de administração (guardada no arquivo `servidor/.senha-admin.txt`, fora do Git).
+- **Criar:** dê um nome (ex.: "amigo-joão") e toque em **Criar convite**. Em **Copiar mensagem** sai um texto pronto
+  para enviar, com o código e o link do app.
+- **Bloquear:** o aparelho perde o acesso na próxima abertura com internet (ou em até 12 h se o app ficar aberto) e
+  os lembretes dele param na hora. A pessoa só consegue exportar os próprios dados, com o PIN dela.
+- **Liberar p/ outro celular:** solta o aparelho atual (que perde o acesso) para o mesmo convite ser usado em outro.
+- **Sem internet:** o app funciona por até 7 dias desde a última confirmação do convite.
+- O servidor guarda só o código, um identificador aleatório do aparelho, a data de ativação e a do último acesso.
+
+Para trocar a senha de administração: `npx wrangler secret put ADMIN_SENHA` na pasta `servidor/`.
+
+---
+
+## 7. Como o app reproduz a planilha
 
 | Planilha | App |
 |---|---|
@@ -154,7 +173,7 @@ src/ui/         telas, componentes e os 7 gráficos (Recharts)
 
 ---
 
-## 7. Critérios de aceite (seção 9)
+## 8. Critérios de aceite (seção 9)
 
 | # | Critério | Como foi conferido |
 |---|---|---|

@@ -80,11 +80,33 @@ export async function salvarCifrado(g: Gravado, chave: CryptoKey, salt: Uint8Arr
   await tx.done;
 }
 
+/** Apaga os dados financeiros e os lembretes. O convite do aparelho é mantido. */
 export async function apagarTudo(): Promise<void> {
   const d = await db();
   const tx = d.transaction([LOJA, LOJA_LEMBRETES], "readwrite");
-  await Promise.all([tx.objectStore(LOJA).clear(), tx.objectStore(LOJA_LEMBRETES).clear()]);
+  await Promise.all([
+    tx.objectStore(LOJA).delete(CIFRADO),
+    tx.objectStore(LOJA).delete(SEM_CIFRA),
+    tx.objectStore(LOJA_LEMBRETES).clear(),
+  ]);
   await tx.done;
+}
+
+// ---------- convite do aparelho (fora da cifra: é lido antes do PIN) ----------
+
+const CHAVE_CONVITE = "convite";
+
+/** isento: aparelho instalado antes dos convites. Os demais guardam o convite usado. */
+export type ConviteLocal =
+  | { isento: true }
+  | { isento?: false; codigo: string; aparelho: string; token: string; ultimaConfirmacao: number };
+
+export async function lerConviteLocal(): Promise<ConviteLocal | null> {
+  return ((await (await db()).get(LOJA, CHAVE_CONVITE)) as ConviteLocal | undefined) ?? null;
+}
+
+export async function salvarConviteLocal(c: ConviteLocal): Promise<void> {
+  await (await db()).put(LOJA, c, CHAVE_CONVITE);
 }
 
 export interface LembreteLocal {

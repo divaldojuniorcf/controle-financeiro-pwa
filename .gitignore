@@ -24,3 +24,6 @@ src/core/__tests__/referencia.test.ts
 servidor/.segredos.json
 servidor/.wrangler/
 servidor/node_modules/
+
+# Senha da página de administração dos convites
+servidor/.senha-admin.txt
