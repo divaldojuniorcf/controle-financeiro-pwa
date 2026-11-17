@@ -16,3 +16,6 @@ src/core/__tests__/referencia.test.ts
 
 # Configuração local do Claude Code
 .claude/
+
+# Certificado do servidor de teste HTTPS
+.vite/
