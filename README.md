@@ -105,7 +105,34 @@ O arquivo de backup **não é cifrado**: guarde-o em local seguro.
 
 ---
 
-## 5. Como o app reproduz a planilha
+## 5. Lembretes de vencimento (notificações)
+
+Às 9h da véspera, uma notificação por dia com os nomes das contas a pagar e a receber que vencem no dia
+seguinte, sem valores, mesmo com o app fechado.
+
+- **Ativar:** no iPhone, abra o app **pelo ícone**, vá em Parâmetros → **Ativar lembretes** e permita as notificações.
+  Requer iOS 16.4 ou mais novo.
+- **Privacidade:** o servidor (`servidor/`, Cloudflare Workers, plano gratuito) guarda só a assinatura de push do
+  aparelho e os **horários** dos avisos. Na hora, ele manda um push vazio. O iPhone monta o texto com os nomes
+  guardados localmente.
+- **Atualização automática:** baixas, edições e recorrências atualizam os lembretes sozinhas quando o app está aberto.
+
+Manutenção do servidor (na pasta `servidor/`):
+
+| Comando | O que faz |
+|---|---|
+| `npx wrangler login` | Entra na conta do Cloudflare |
+| `npx wrangler deploy` | Publica o servidor de novo depois de mudanças |
+| `npx wrangler tail` | Mostra os registros do servidor em tempo real |
+
+A chave privada das notificações fica só no Cloudflare (segredo `VAPID_PRIVADA`) e no arquivo local
+`servidor/.segredos.json`, fora do Git. Para trocar o par de chaves: `node scripts/gerar-chaves-vapid.mjs --substituir`,
+`npx wrangler secret bulk .segredos.json`, atualizar a chave pública em `.env` e `servidor/wrangler.toml` e ativar
+os lembretes de novo no iPhone.
+
+---
+
+## 6. Como o app reproduz a planilha
 
 | Planilha | App |
 |---|---|
@@ -127,7 +154,7 @@ src/ui/         telas, componentes e os 7 gráficos (Recharts)
 
 ---
 
-## 6. Critérios de aceite (seção 9)
+## 7. Critérios de aceite (seção 9)
 
 | # | Critério | Como foi conferido |
 |---|---|---|
