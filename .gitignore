@@ -1,0 +1,18 @@
+node_modules/
+dist/
+*.local
+
+# Dados financeiros pessoais: nunca versionar nem publicar
+dados.json
+*.xlsx
+*.xlsm
+backup-*.json
+controle-financeiro-*.json
+*.csv
+
+# Contêm valores das suas finanças (seção 10): ficam só no computador
+especificacao.md
+src/core/__tests__/referencia.test.ts
+
+# Configuração local do Claude Code
+.claude/
