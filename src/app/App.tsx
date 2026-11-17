@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { Tela } from "../ui/componentes";
 import { BoasVindas } from "../ui/telas/BoasVindas";
 import { Contas } from "../ui/telas/Contas";
+import { Dashboard } from "../ui/telas/Dashboard";
 import { Investimentos } from "../ui/telas/Investimentos";
 import { Lancamentos } from "../ui/telas/Lancamentos";
 import { PagasRecebidas } from "../ui/telas/PagasRecebidas";
@@ -31,12 +31,8 @@ const ABAS: { id: Aba; rotulo: string; curto: string }[] = [
   { id: "parametros", rotulo: "Parâmetros", curto: "Parâm." },
 ];
 
-function EmConstrucao({ titulo, fase }: { titulo: string; fase: number }) {
-  return <Tela titulo={titulo} ajuda={`Esta tela chega na Fase ${fase}.`}>{null}</Tela>;
-}
-
 function Telas() {
-  const [aba, setAba] = useState<Aba>(() => (sessionStorage.getItem("aba") as Aba | null) ?? "lancamentos");
+  const [aba, setAba] = useState<Aba>(() => (sessionStorage.getItem("aba") as Aba | null) ?? "dashboard");
   useEffect(() => {
     sessionStorage.setItem("aba", aba);
     window.scrollTo(0, 0);
@@ -44,7 +40,7 @@ function Telas() {
 
   return (
     <div className="app">
-      {aba === "dashboard" && <EmConstrucao titulo="Dashboard Financeiro" fase={5} />}
+      {aba === "dashboard" && <Dashboard />}
       {aba === "pagar" && <Contas key="pagar" tipo="Pagar" />}
       {aba === "receber" && <Contas key="receber" tipo="Receber" />}
       {aba === "pagas" && <PagasRecebidas />}
