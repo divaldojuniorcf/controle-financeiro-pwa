@@ -134,17 +134,14 @@ export default {
       const assinatura = validarAssinatura(corpo?.assinatura);
       const horarios = validarHorarios(corpo?.horarios);
       if (!assinatura || !horarios) return json({ erro: "dados inválidos" }, 400, h);
-      // Aparelho com convite: só agenda se o convite segue valendo (aparelhos antigos, sem convite, ficam isentos).
-      let convite: string | undefined;
-      if (corpo?.convite) {
-        if ((await conviteValido(env, corpo.convite)) !== "ok") {
-          await env.DISPOSITIVOS.delete(PREFIXO + id);
-          return json({ erro: "convite bloqueado" }, 403, h);
-        }
-        convite = normalizarCodigo(corpo.convite.codigo);
-        await vincularLembrete(env.DISPOSITIVOS, convite, id);
+      // Só agenda para aparelho com convite válido; sem convite ou bloqueado, apaga o que houver.
+      if ((await conviteValido(env, corpo?.convite)) !== "ok") {
+        await env.DISPOSITIVOS.delete(PREFIXO + id);
+        return json({ erro: "convite inválido ou bloqueado" }, 403, h);
       }
-      const d: Dispositivo = { hash: a.hash, assinatura, horarios, ...(convite ? { convite } : {}) };
+      const convite = normalizarCodigo(corpo!.convite!.codigo);
+      await vincularLembrete(env.DISPOSITIVOS, convite, id);
+      const d: Dispositivo = { hash: a.hash, assinatura, horarios, convite };
       await env.DISPOSITIVOS.put(PREFIXO + id, JSON.stringify(d));
       return json({ ok: true, agendados: horarios.length }, 200, h);
     }

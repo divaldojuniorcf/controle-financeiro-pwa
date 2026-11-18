@@ -69,17 +69,13 @@ async function situacaoDosDados(): Promise<Situacao> {
 }
 
 /**
- * Confere o convite antes de tudo. Aparelhos que já tinham dados antes dos convites ficam isentos;
- * instalações novas precisam de convite. Sem internet, vale por 7 dias desde a última confirmação.
+ * Confere o convite antes de tudo. Todo aparelho precisa de convite, inclusive os que já tinham
+ * dados (a isenção antiga não vale mais: eles colam um convite uma vez e seguem para o PIN).
+ * Sem internet, vale por 7 dias desde a última confirmação.
  */
 async function verificarAcesso(): Promise<"livre" | Situacao> {
   const [g, c] = await Promise.all([lerSituacao(), lerConviteLocal()]);
-  if (!c) {
-    if (g.tipo === "vazio") return { tipo: "convite" };
-    await salvarConviteLocal({ isento: true });
-    return "livre";
-  }
-  if (c.isento) return "livre";
+  if (!c || c.isento) return { tipo: "convite" };
   const r = await confirmarConvite(c);
   if (r === "ok") {
     await salvarConviteLocal({ ...c, ultimaConfirmacao: Date.now() });

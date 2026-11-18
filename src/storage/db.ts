@@ -96,7 +96,7 @@ export async function apagarTudo(): Promise<void> {
 
 const CHAVE_CONVITE = "convite";
 
-/** isento: aparelho instalado antes dos convites. Os demais guardam o convite usado. */
+/** isento: marca antiga (aparelhos de antes dos convites); hoje vale como "sem convite". */
 export type ConviteLocal =
   | { isento: true }
   | { isento?: false; codigo: string; aparelho: string; token: string; ultimaConfirmacao: number };

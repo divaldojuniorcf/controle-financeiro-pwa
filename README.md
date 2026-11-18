@@ -134,8 +134,8 @@ os lembretes de novo no iPhone.
 
 ## 6. Convites (quem pode usar o app)
 
-Instalações novas pedem um **código de convite** na primeira abertura. Cada convite vale para **1 aparelho**.
-Aparelhos que já tinham o app antes dos convites ficam isentos.
+**Todo aparelho** precisa de um **código de convite** (inclusive o do dono). Cada convite vale para **1 aparelho**.
+Quem já tinha dados cola o convite uma vez e segue para o PIN, com os dados intactos.
 
 - **Gerenciar:** abra `https://controle-financeiro-lembretes.divaldojuniorcf.workers.dev/admin` e entre com a senha
   de administração (guardada no arquivo `servidor/.senha-admin.txt`, fora do Git).
