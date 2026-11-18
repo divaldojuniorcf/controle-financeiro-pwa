@@ -42,7 +42,7 @@ export function TelaInstalar({ aoContinuar }: { aoContinuar?: () => void }) {
       <ol className="passos">
         {ios ? (
           <>
-            <li>Confira se está no <b>Safari</b>. Em outro navegador, abra este mesmo link no Safari.</li>
+            <li>Confira se está no <b>Safari</b>. Se o link abriu dentro do WhatsApp ou de outro app, toque no ícone de bússola (ou em ⋯) e escolha <b>Abrir no Safari</b>.</li>
             <li>{convite ? <>Toque em <b>Copiar convite</b> (acima).</> : <>Tenha em mãos o código do convite que você recebeu.</>}</li>
             <li>Toque em <b>Compartilhar</b> <span aria-hidden="true">(quadrado com seta para cima ⬆︎)</span>, na barra de baixo.</li>
             <li>Role e toque em <b>Adicionar à Tela de Início</b> e depois em <b>Adicionar</b>.</li>
