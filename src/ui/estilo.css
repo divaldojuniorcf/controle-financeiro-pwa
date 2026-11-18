@@ -187,3 +187,7 @@ textarea.codigo {
   width: 100%; min-height: 72px; padding: 8px 10px; border: 1px solid #b7c3d4; border-radius: 8px;
   color: var(--editavel); font: 14px/1.35 ui-monospace, Menlo, monospace; word-break: break-all; resize: vertical;
 }
+
+/* Passo a passo de instalação */
+.passos { padding-left: 22px; line-height: 1.5; margin: 8px 0 12px; }
+.passos li { margin-bottom: 8px; }

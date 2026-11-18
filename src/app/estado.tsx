@@ -7,9 +7,10 @@ import {
   apagarTudo, completarUi, lerConviteLocal, lerSituacao, pedirArmazenamentoPersistente, salvarCifrado, salvarConviteLocal, UI_PADRAO,
   type ConviteLocal, type EstadoUi, type Gravado,
 } from "../storage/db";
-import { AcessoBloqueado, SemConexao, TelaConvite } from "../ui/telas/Convite";
+import { AcessoBloqueado, SemConexao, TelaConvite, TelaInstalar } from "../ui/telas/Convite";
 import { CriarPin, Desbloquear } from "../ui/telas/Pin";
 import { confirmarConvite, dentroDoPrazoOffline, INTERVALO_CONFIRMACAO_MS } from "./convite";
+import { ehIOS, emModoApp } from "./plataforma";
 
 interface ContextoApp {
   estado: Estado;
@@ -90,6 +91,8 @@ async function verificarAcesso(): Promise<"livre" | Situacao> {
 
 export function ProvedorApp({ vazio, children }: { vazio: (iniciar: ContextoApp["substituirTudo"]) => ReactNode; children: ReactNode }) {
   const [s, setS] = useState<Situacao>({ tipo: "carregando" });
+  // Fora do iPhone, quem quiser pode usar direto no navegador em vez de instalar.
+  const [noNavegador, setNoNavegador] = useState(false);
   // Muda quando o dia vira ou o app volta ao primeiro plano, para recalcular "Hoje".
   const [dia, setDia] = useState(hojeDoAparelho());
   const fila = useRef(Promise.resolve());
@@ -221,6 +224,8 @@ export function ProvedorApp({ vazio, children }: { vazio: (iniciar: ContextoApp[
   if (s.tipo === "vazio") return <>{vazio(substituirTudo)}</>;
   if (s.tipo === "criar-pin") return <CriarPin migracao={s.migracao} aoCriar={criarPin} />;
   if (s.tipo === "bloqueado") return <Desbloquear aoDesbloquear={desbloquear} aoEsquecer={esqueciPin} />;
+  if (s.tipo === "convite" && !emModoApp() && !noNavegador)
+    return <TelaInstalar aoContinuar={ehIOS() ? undefined : () => setNoNavegador(true)} />;
   if (s.tipo === "convite")
     return <TelaConvite aoUsar={async (c: ConviteLocal) => { await salvarConviteLocal(c); setS(await situacaoDosDados()); }} />;
   if (s.tipo === "acesso-bloqueado") return <AcessoBloqueado cifrado={s.cifrado} />;

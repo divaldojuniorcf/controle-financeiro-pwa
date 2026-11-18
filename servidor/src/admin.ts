@@ -118,7 +118,20 @@ export function paginaAdmin(urlApp: string): string {
     const b = e.target.closest("button"); if (!b) return;
     const { a, c } = b.dataset;
     if (a === "copiar") {
-      const texto = "Seu convite para o app Controle Financeiro: " + fmt(c) + "\\nAbra no Safari: " + URL_APP + "\\nToque em Compartilhar → Adicionar à Tela de Início, abra pelo ícone e digite o convite.";
+      const texto = [
+        "Você recebeu um convite para o app Controle Financeiro.",
+        "",
+        "Seu convite: " + fmt(c),
+        "",
+        "Como instalar no iPhone:",
+        "1. Abra este link no Safari: " + URL_APP + "?convite=" + fmt(c),
+        "2. Toque em \\"Copiar convite\\".",
+        "3. Toque em Compartilhar (quadrado com seta para cima) e em \\"Adicionar à Tela de Início\\" → Adicionar.",
+        "4. Feche o Safari e abra o app pelo ícone \\"Finanças\\".",
+        "5. Toque em \\"Colar\\" para inserir o convite e em \\"Continuar\\".",
+        "",
+        "O convite vale para 1 aparelho. Seus dados ficam só no seu celular.",
+      ].join("\\n");
       try { await navigator.clipboard.writeText(texto); aviso("Mensagem copiada. Cole no WhatsApp ou e-mail."); } catch { prompt("Copie a mensagem:", texto); }
       return;
     }
